@@ -20,6 +20,7 @@
 #########################################################################
 
 import datetime
+import time
 import logging
 import os
 import pickle
@@ -122,18 +123,28 @@ def _fadejob(item, dest, step, delta):
         return
     else:
         item._fading = True
+    cnt = 0
+    timeout = delta
+    start = time.time()
     if item._value < dest:
         while (item._value + step) < dest and item._fading:
             item(item._value + step, 'fader')
             item._lock.acquire()
-            item._lock.wait(delta)
+            item._lock.wait(timeout)
             item._lock.release()
+            cnt += 1
+            duration = time.time() - start - cnt * delta
+            timeout =  delta * (delta / duration)
+
     else:
         while (item._value - step) > dest and item._fading:
             item(item._value - step, 'fader')
             item._lock.acquire()
-            item._lock.wait(delta)
+            item._lock.wait(timeout)
             item._lock.release()
+            cnt += 1
+            duration = time.time() - start - cnt * delta
+            timeout =  delta * (delta / duration)
     if item._fading:
         item._fading = False
         item(dest, 'Fader')
