@@ -20,6 +20,41 @@ Following attributes are supported in smarthome.conf:
    sunrise/sunset calculation, dealing with the position of the sun.
 -  ``tz``: timezone
 -  ``item_change_log``: log item changes with loglevel info
+-  ``db``: register DB API2 implementations using "<alias>:<module> | ..." (defaults to `sqlite:sqlite3`)
+
+Attribute: `lat`, `lon`, `elev`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The `lat` and `lon` options specifies the GPS coordinates of your
+home. It's the latitude and longitute of the coordinates. You can
+lookup your coordinates by using Google Maps or similar websites.
+
+The elevation is the level above the sea level in meters. This value
+can be looked up on different websites - just search for it.
+
+Attribute: `tz`
+~~~~~~~~~~~~~~~
+Specify the timezone of your home in text form, e.g. "Europe/Berlin" 
+
+Attribute: `item_change_log`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enables logging of item changes with INFO logging level. The default
+is to log item changes only with DEBUG logging level. Adding this
+attribute will change this to INFO logging level.
+
+Attribute: `db`
+~~~~~~~~~~~~~~~
+Configures the database implementation registry. It is a list of
+implementation with a given alias using the format `<alias>:<module>`.
+You can specify multiple modules to support different database
+implementations (e.g. `sqlite:sqlite3 | mysql:mysqldb`).
+
+The database implementation should implement the [DB API2](http://www.python.org/dev/peps/pep-0249/)
+specification. For available implementation look [here](https://wiki.python.org/moin/DatabaseInterfaces).
+
+If you do not configure the SQLite implementation - which is
+bundled with Python - explicitely, it will be configured automatically
+and can be used with the alias `sqlite`.
+
 
 Sample Configuration
 ~~~~~~~~~~~~~~~~~~~~
