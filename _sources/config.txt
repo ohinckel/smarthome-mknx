@@ -55,6 +55,11 @@ If you do not configure the SQLite implementation - which is
 bundled with Python - explicitely, it will be configured automatically
 and can be used with the alias `sqlite`.
 
+To access a database implementation for example in the plugin code
+you can use the `sh.dbapi()` function which will return an instance
+to the database implementation module. This can be used to call
+`connect()`, `execute()` or any other function defined in the DB API2 
+specification.
 
 Sample Configuration
 ~~~~~~~~~~~~~~~~~~~~
