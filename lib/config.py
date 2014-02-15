@@ -94,7 +94,12 @@ def parse(filename, config=None):
                 if not set(attr).issubset(valid_set):
                     logger.error("Problem parsing '{}' invalid character in line {}: {}. Valid characters are: {}".format(filename, linenu, attr, valid_chars))
                     continue
-                if '|' in value:
+                if value.strip()[0] == '{' and value.strip()[-1] == '}':
+                    item[attr] = {}
+                    for x in value.strip()[1:-2].split('|'):
+                        keyname, __, keyvalue = x.partition(':')
+                        item[attr][strip_quotes(keyname)] = strip_quotes(keyvalue)
+                elif '|' in value:
                     item[attr] = [strip_quotes(x) for x in value.split('|')]
                 else:
                     item[attr] = strip_quotes(value)
