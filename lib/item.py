@@ -132,9 +132,9 @@ def _fadejob(item, dest, step, delta):
             item._lock.acquire()
             item._lock.wait(timeout)
             item._lock.release()
-            cnt += 1
             duration = time.time() - start - cnt * delta
             timeout =  delta * (delta / duration)
+            cnt += 1
 
     else:
         while (item._value - step) > dest and item._fading:
@@ -142,9 +142,9 @@ def _fadejob(item, dest, step, delta):
             item._lock.acquire()
             item._lock.wait(timeout)
             item._lock.release()
-            cnt += 1
             duration = time.time() - start - cnt * delta
             timeout =  delta * (delta / duration)
+            cnt += 1
     if item._fading:
         item._fading = False
         item(dest, 'Fader')
