@@ -33,10 +33,45 @@ plugin.conf
     class_path = plugins.rrd
     # step = 300
     # rrd_dir = /usr/smarthome/var/rrd/
+    # register = _single : db | _series : series
 </pre>
 
-`step` sets the cycle time how often entries will be updated.
-`rrd_dir` specify the rrd storage location.
+### step
+Sets the cycle time how often entries will be updated.
+
+### rrd_dir
+Specify the directory of the rrd storage.
+
+### register
+Usually this plugin registers function on all items to provide access to the
+data (see below for the details of the function).
+
+This functions can be used in other plugins or logics or other code you're
+using. Since it registers the function on a specific name, you're not able
+to use other plugins, which registers functions with the same name too (e.g.
+the SQLite plugin).
+
+To avoid nameing clashes you can use this configuration setting to register
+the function with another name. To configure this use a hash-map style
+configuration which consits of the original function name and the mapped
+function. The standard configuration is shown above in the example (so no
+special mapping is configured).
+
+For example you can configure the registration the function with other names:
+<pre>
+  register = \_single : rrd_db | \_series : rrd_series
+</pre>
+
+This will register the `_single` function (as shown below) with another name
+`rrd_db` and the function `_series` (internally used in the visu plugin)
+with the name `rrd_series`. You do not need to specify both if you only
+want to use another name for one of the function.
+
+Keep in mind, if you change this, you also need to adjust the code using
+the functions with the standard name. On the other hand, this enables you
+to use both the `sqlite` and the `rrd` plugin, which currently supports
+this.
+
 
 items.conf
 --------------

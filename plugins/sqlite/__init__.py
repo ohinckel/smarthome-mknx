@@ -51,7 +51,7 @@ class SQL():
         GROUP by CAST((_start / {}) AS INTEGER), _item
         ORDER BY _start DESC;"""
 
-    def __init__(self, smarthome, cycle=300, path=None, dumpfile=False):
+    def __init__(self, smarthome, cycle=300, path=None, dumpfile=False, register=None):
 #       sqlite3.register_adapter(datetime.datetime, self._timestamp)
         self._sh = smarthome
         self.connected = False
@@ -61,6 +61,11 @@ class SQL():
         self._fdb_lock = threading.Lock()
         self._fdb_lock.acquire()
         self._dumpfile = dumpfile
+        self._register = { '_single' : 'db', '_series' : 'series' }
+        if register != None:
+            for reg in register.split('|') if type(register) == str else register:
+                func, name = reg.split(':')
+                self._register[func.strip()] = name.strip()
         if path is None:
             self.path = smarthome.base_dir + '/var/db/smarthome.db'
         else:
@@ -147,8 +152,10 @@ class SQL():
                 item._sqlite_last = last_change
                 self._execute("INSERT OR IGNORE INTO cache VALUES('{}',{},{})".format(item.id(), last_change, float(item())))
             self._buffer[item] = []
-            item.series = functools.partial(self._series, item=item.id())
-            item.db = functools.partial(self._single, item=item.id())
+            for func in self._register:
+                name = self._register[func]
+                logger.debug("Register {} with {}".format(func, name))
+                setattr(item, name, functools.partial(getattr(self, func), item=item.id()))
             return self.update_item
         else:
             return None

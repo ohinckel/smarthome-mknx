@@ -11,11 +11,46 @@ plugin.conf
     class_path = plugins.sqlite
 #   path = None
 #   dumpfile = /tmp/smarthomedb.dump
+#   register =  _single : db | _series : series
 </pre>
 
-The `path` attribute allows you to specify the of the SQLite database.
+### path
+This attribute allows you to specify the directory of the SQLite database if
+you do not want to use the default directory.
 
+### dumpfile
 If you specify a `dumpfile`, SmartHome.py dumps the database every night into this file.
+
+### register
+Usually this plugin registers function on all items to provide access to the
+data (see below for the details of the function).
+
+This functions can be used in other plugins or logics or other code you're
+using. Since it registers the function on a specific name, you're not able
+to use other plugins, which registers functions with the same name too (e.g.
+the SQLite plugin).
+
+To avoid naming clashes you can use this configuration setting to register
+the function with another name. To configure this use a hash-map style
+configuration which consits of the original function name and the mapped
+function. The standard configuration is shown above in the example (so no
+special mapping is configured).
+
+For example you can configure the registration the function with other names:
+<pre>
+  register = \_single : sqlite_db | \_series : sqlite_series
+</pre>
+
+This will register the `_single` function (as shown below) with another name
+`sqlite_db` and the function `_series` (internally used in the visu plugin)
+with the name `sqlite_series`. You do not need to specify both if you only
+want to use another name for one of the function.
+
+Keep in mind, if you change this, you also need to adjust the code using
+the functions with the standard name. On the other hand, this enables you
+to use both the `sqlite` and the `rrd` plugin, which currently supports
+this.
+
 
 items.conf
 --------------

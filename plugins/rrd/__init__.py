@@ -31,13 +31,18 @@ logger = logging.getLogger('')
 
 class RRD():
 
-    def __init__(self, smarthome, step=300, rrd_dir=None):
+    def __init__(self, smarthome, step=300, rrd_dir=None, register=None):
         self._sh = smarthome
         if rrd_dir is None:
             rrd_dir = smarthome.base_dir + '/var/rrd/'
         self._rrd_dir = rrd_dir
         self._rrds = {}
         self.step = int(step)
+        self._register = { '_single' : 'db', '_series' : 'series' }
+        if register != None:
+            for reg in register.split('|') if type(register) == str else register:
+                func, name = reg.split(':')
+                self._register[func.strip()] = name.strip()
 
     def run(self):
         self.alive = True
@@ -85,8 +90,9 @@ class RRD():
                 rrd_type = 'COUNTER'
         if 'rrd_step' in item.conf:
             rrd_step = int(item.conf['rrd_step'])
-        item.series = functools.partial(self._series, item=item.id())
-        item.db = functools.partial(self._single, item=item.id())
+        for func in self._register:
+            name = self._register[func]
+            setattr(item, name, functools.partial(getattr(self, func), item=item.id()))
         self._rrds[item.id()] = {'item': item, 'id': item.id(), 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
 
         if item.conf['rrd'] == 'init':
