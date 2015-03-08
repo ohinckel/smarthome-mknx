@@ -203,12 +203,16 @@ class DbLog():
         logger.debug('Dump completed')
         self._dump_lock.release()
 
-    def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+    def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None, offset=None):
         init = not update
         if sid is None:
-            sid = item + '|' + func + '|' + start + '|' + end
+            sid = item + '|' + ((offset + '|') if offset != None else '') + func + '|' + start + '|' + end
+        if offset == None:
+            offset = "0h"
         istart = self._parse_ts(start)
         iend = self._parse_ts(end)
+        ioffset = self._parse_ts(offset, True)
+        logger.debug("offset range {} - {}, offset {} ({}) = {}".format(istart, iend, self._parse_ts(offset), offset, ioffset))
         if step is None:
             if count != 0:
                 step = int((iend - istart) / count)
@@ -219,30 +223,30 @@ class DbLog():
         reply['update'] = self._sh.now() + datetime.timedelta(seconds=int(step / 1000))
         where = " FROM log WHERE item_id = ? AND time + duration > ? AND time <= ? GROUP BY ROUND(time / ?)"
         if func == 'avg':
-            query = "SELECT MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)" + where + " ORDER BY time ASC"
+            query = "SELECT MIN(time + " + str(ioffset) + "), ROUND(AVG(val_num * duration) / AVG(duration), 2)" + where + " ORDER BY time ASC"
         elif func == 'min':
-            query = "SELECT MIN(time), MIN(val_num)" + where
+            query = "SELECT MIN(time + " + str(ioffset) + "), MIN(val_num)" + where
         elif func == 'max':
-            query = "SELECT MIN(time), MAX(val_num)" + where
+            query = "SELECT MIN(time + " + str(ioffset) + "), MAX(val_num)" + where
         elif func == 'on':
-            query = "SELECT MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)" + where + " ORDER BY time ASC"
+            query = "SELECT MIN(time + " + str(ioffset) + "), ROUND(SUM(val_bool * duration) / SUM(duration), 2)" + where + " ORDER BY time ASC"
         else:
             raise NotImplementedError
         _item = self._sh.return_item(item)
         if self._buffer[_item] != []:
             self._dump(items=[_item])
-        tuples = self._fetch(query, item, [istart, iend, step])
+        tuples = self._fetch(query, item, [istart - ioffset, iend - ioffset, step])
         if tuples:
-            if istart > tuples[0][0]:
+            if istart - ioffset > tuples[0][0]:
                 tuples[0] = (istart, tuples[0][1])
             if end != 'now':
                 tuples.append((iend, tuples[-1][1]))
         else:
             tuples = []
         item_change = self._timestamp(_item.last_change())
-        if item_change < iend:
+        if item_change < iend - ioffset:
             value = float(_item())
-            if item_change < istart:
+            if item_change < istart - ioffset:
                 tuples.append((istart, value))
             elif init:
                 tuples.append((item_change, value))
@@ -289,7 +293,7 @@ class DbLog():
         else:
             return list(tuples)
 
-    def _parse_ts(self, frame):
+    def _parse_ts(self, frame, offset=False):
         minute = 60 * 1000
         hour = 60 * minute
         day = 24 * hour
@@ -312,7 +316,10 @@ class DbLog():
         else:
             return frame
         try:
-            ts = ts - int(float(frame) * fac)
+            if offset:
+                ts = int(float(frame) * fac)
+            else:
+                ts = ts - int(float(frame) * fac)
         except:
             logger.warning("DBLog: Unknown time frame '{0}'".format(frame))
         return ts

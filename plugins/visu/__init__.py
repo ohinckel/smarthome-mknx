@@ -319,10 +319,14 @@ class WebSocketHandler(lib.connection.Stream):
                 count = data['count']
             else:
                 count = 100
+            if 'offset' in data:
+                offset = data['offset']
+            else:
+                offset = None
             if path in self.items:
                 if hasattr(self.items[path]['item'], 'series'):
                     try:
-                        reply = self.items[path]['item'].series(series, start, end, count)
+                        reply = self.items[path]['item'].series(series, start, end, count, offset=offset)
                     except Exception as e:
                         logger.exception("Problem fetching series for {0}: {1}".format(path, e))
                     else:
