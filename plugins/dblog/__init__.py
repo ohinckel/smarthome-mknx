@@ -212,7 +212,7 @@ class DbLog():
         istart = self._parse_ts(start)
         iend = self._parse_ts(end)
         ioffset = self._parse_ts(offset, True)
-        logger.debug("offset range {} - {}, offset {} ({}) = {}".format(istart, iend, self._parse_ts(offset), offset, ioffset))
+        logger.debug("Series for {} offset range {} - {}, offset {} ({}) = {}".format(item, istart, iend, self._parse_ts(offset), offset, ioffset))
         if step is None:
             if count != 0:
                 step = int((iend - istart) / count)
